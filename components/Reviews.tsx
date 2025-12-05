@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StarRating from './StarRating';
-import { addReview, exportReviews, readReviews, type Review, writeReviews } from '@/lib/reviews';
+import { addReview, readReviews, type Review } from '@/lib/reviews';
 
 export default function Reviews() {
 	const [reviews, setReviews] = useState<Review[]>([]);
 	const [name, setName] = useState('');
 	const [rating, setRating] = useState(0);
 	const [comment, setComment] = useState('');
-	const fileRef = useRef<HTMLInputElement>(null);
+    
 
 	useEffect(() => {
 		setReviews(readReviews());
@@ -43,29 +43,7 @@ export default function Reviews() {
 		setComment('');
 	}
 
-	async function onImport(files: FileList | null) {
-		const f = files?.[0];
-		if (!f) return;
-		try {
-			const text = await f.text();
-			const json = JSON.parse(text);
-			if (!Array.isArray(json)) throw new Error('Format JSON invalide');
-			const cleaned: Review[] = json
-				.map((r: any) => ({
-					name: typeof r.name === 'string' ? r.name : 'Anonyme',
-					rating: Math.max(1, Math.min(5, Number(r.rating) || 0)),
-					comment: typeof r.comment === 'string' ? r.comment : '',
-					date: r.date && !Number.isNaN(Date.parse(r.date)) ? r.date : new Date().toISOString()
-				}))
-				.filter((r: Review) => r.comment && r.rating);
-			writeReviews(cleaned);
-			setReviews(cleaned);
-			if (fileRef.current) fileRef.current.value = '';
-			alert('Import réussi.');
-		} catch {
-			alert('Échec de l’import. Sélectionnez un JSON valide.');
-		}
-	}
+    
 
 	return (
 		<div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
@@ -85,11 +63,6 @@ export default function Reviews() {
 					</div>
 					<div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
 						<button type="submit" className="btn btn-primary w-full sm:w-auto text-sm sm:text-base text-center">Publier l'avis</button>
-						<button type="button" onClick={() => exportReviews()} className="btn btn-ghost w-full sm:w-auto text-sm sm:text-base text-center">Exporter JSON</button>
-						<label className="btn btn-ghost cursor-pointer w-full sm:w-auto text-sm sm:text-base text-center">
-							Importer JSON
-							<input ref={fileRef} onChange={e => onImport(e.target.files)} type="file" accept="application/json" hidden />
-						</label>
 					</div>
 					<p className="text-xs text-ink/60 mt-1">Vos avis sont stockés sur votre appareil (localStorage) pour la démonstration.</p>
 				</div>
